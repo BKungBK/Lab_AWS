@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AWS Labs Learning - Lab 1-5 Complete</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 { font-size: 32px; margin-bottom: 10px; }
+        .header p { font-size: 14px; opacity: 0.9; }
+        .content { padding: 40px; }
+        .page { display: none; }
+        .page.active { display: block; animation: fadeIn 0.5s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        
+        .labs-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        .lab-card {
+            background: white;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .lab-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.2);
+            transform: translateY(-5px);
+        }
+        .lab-card h3 { color: #667eea; margin-bottom: 10px; }
+        .lab-card p { color: #666; font-size: 14px; line-height: 1.6; }
+        
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #eee;
+            border-radius: 4px;
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s;
+        }
+        .question-header { margin-bottom: 30px; }
+        .question-number { font-size: 12px; color: #999; margin-bottom: 10px; }
+        .question-section {
+            display: inline-block;
+            background: #f0f0f0;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            color: #667eea;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+        .question-text {
+            font-size: 18px;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 25px;
+            line-height: 1.6;
+        }
+        .options { display: grid; gap: 12px; }
+        .option-btn {
+            padding: 15px;
+            border: 2px solid #ddd;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.3s;
+            font-size: 15px;
+            font-weight: 500;
+        }
+        .option-btn:hover { border-color: #667eea; background: #f8f8ff; }
+        .option-btn.selected { border-color: #667eea; background: #f0f0ff; }
+        .option-btn.correct { border-color: #4caf50; background: #f1f8e9; color: #2e7d32; }
+        .option-btn.incorrect { border-color: #f44336; background: #ffebee; color: #c62828; }
+        
+        .feedback {
+            margin-top: 20px;
+            padding: 15px;
+            border-left: 4px solid #ddd;
+            border-radius: 4px;
+            display: none;
+        }
+        .feedback.show { display: block; }
+        .feedback.correct-fb { border-left-color: #4caf50; background: #f1f8e9; color: #2e7d32; }
+        .feedback.incorrect-fb { border-left-color: #f44336; background: #ffebee; color: #c62828; }
+        
+        .nav-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 40px;
+            justify-content: space-between;
+        }
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3); }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-secondary { background: #f0f0f0; color: #333; }
+        .btn-secondary:hover { background: #e0e0e0; }
+        
+        .summary-content { text-align: center; }
+        .score-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            border-radius: 12px;
+            margin: 30px 0;
+        }
+        .score-box h2 { font-size: 28px; margin-bottom: 10px; }
+        .score-box .score-value { font-size: 48px; font-weight: bold; margin: 20px 0; }
+        .summary-details { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 30px 0; }
+        .summary-card {
+            background: #f8f8f8;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        .summary-card h3 { margin-bottom: 10px; color: #333; }
+        .summary-card .value { font-size: 24px; font-weight: bold; color: #667eea; }
+        .message { font-size: 16px; margin: 20px 0; color: #666; }
+        .btn-group { display: flex; gap: 12px; justify-content: center; margin-top: 30px; }
+        
+        @media (max-width: 768px) {
+            .labs-grid { grid-template-columns: 1fr; }
+            .summary-details { grid-template-columns: 1fr; }
+            .content { padding: 20px; }
+            .header h1 { font-size: 24px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>AWS Labs Interactive Learning</h1>
+            <p>Lab 1: IAM | Lab 2: VPC | Lab 3: EC2 | Lab 4: EBS | Lab 5: RDS</p>
+        </div>
+        
+        <div class="content">
+            <!-- Home Page -->
+            <div id="homePage" class="page active">
+                <h2 style="margin-bottom: 20px; color: #333; text-align: center;">เลือก Lab ที่ต้องการเรียน</h2>
+                <div class="labs-grid">
+                    <div class="lab-card" onclick="window.labApp.startLab('iam')">
+                        <h3>👥 Lab 1: IAM</h3>
+                        <p>เรียนรู้ Users, Groups, Permissions, Policies และการ Sign-in</p>
+                        <p style="margin-top: 10px; font-size: 13px; color: #999;">20 คำถาม</p>
+                    </div>
+                    <div class="lab-card" onclick="window.labApp.startLab('vpc')">
+                        <h3>🌐 Lab 2: VPC</h3>
+                        <p>สร้าง VPC, Subnets (Public/Private), Route tables, Security groups</p>
+                        <p style="margin-top: 10px; font-size: 13px; color: #999;">22 คำถาม</p>
+                    </div>
+                    <div class="lab-card" onclick="window.labApp.startLab('ec2')">
+                        <h3>💻 Lab 3: EC2</h3>
+                        <p>Launch, Monitor, Resize instance, Termination protection, Stop protection</p>
+                        <p style="margin-top: 10px; font-size: 13px; color: #999;">25 คำถาม</p>
+                    </div>
+                    <div class="lab-card" onclick="window.labApp.startLab('ebs')">
+                        <h3>🔷 Lab 4: EBS</h3>
+                        <p>สร้าง Volume, Attachment, File System, Snapshot, และการ Restore</p>
+                        <p style="margin-top: 10px; font-size: 13px; color: #999;">25 คำถาม</p>
+                    </div>
+                    <div class="lab-card" onclick="window.labApp.startLab('rds')">
+                        <h3>🗄️ Lab 5: RDS</h3>
+                        <p>สร้าง RDS Database, Security Group, Subnet Group, Multi-AZ deployment</p>
+                        <p style="margin-top: 10px; font-size: 13px; color: #999;">20 คำถาม</p>
+                    </div>
+                </div>
+                <div style="text-align: left; background: #f8f8f8; padding: 20px; border-radius: 8px; margin-top: 30px;">
+                    <h3 style="color: #333; margin-bottom: 15px;">📚 เนื้อหาครอบคลุม:</h3>
+                    <ul style="color: #666; line-height: 2; margin-left: 20px;">
+                        <li>✓ Lab 1: IAM → Users, Groups, Policies, Sign-in</li>
+                        <li>✓ Lab 2: VPC → VPC, Subnets, Route tables, Security groups</li>
+                        <li>✓ Lab 3: EC2 → Launch, Monitor, Resize, Protections</li>
+                        <li>✓ Lab 4: EBS → Volume, Snapshot, Restore, File system</li>
+                        <li>✓ Lab 5: RDS → Multi-AZ, Security, Database connection</li>
+                        <li>✓ รวม 112 คำถาม ครอบคลุมทั้ง Concept และ Step-by-Step</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Quiz Page -->
+            <div id="quizPage" class="page">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="question-header">
+                    <div class="question-number">
+                        Question <span id="currentQ">1</span> / <span id="totalQ">20</span>
+                    </div>
+                    <div class="question-section" id="sectionLabel">Lab 1: IAM</div>
+                </div>
+                <div class="question-text" id="questionText"></div>
+                <div class="options" id="optionsContainer"></div>
+                <div class="feedback" id="feedback"></div>
+                <div class="nav-buttons">
+                    <button class="btn-secondary" onclick="window.labApp.prevQuestion()" id="prevBtn">← ย้อนกลับ</button>
+                    <button class="btn-primary" onclick="window.labApp.nextQuestion()" id="nextBtn" disabled>ถัดไป →</button>
+                </div>
+            </div>
+
+            <!-- Summary Page -->
+            <div id="summaryPage" class="page">
+                <div class="summary-content">
+                    <h2 style="color: #333; margin-bottom: 20px;">ผลการเรียน</h2>
+                    <div class="score-box">
+                        <h2 id="labTitle">Lab 1: IAM</h2>
+                        <div>คะแนน</div>
+                        <div class="score-value" id="scoreValue">0/20</div>
+                        <div id="scorePercent">0%</div>
+                    </div>
+                    <div class="summary-details">
+                        <div class="summary-card">
+                            <h3>✓ ตอบถูก</h3>
+                            <div class="value" id="correctCount">0</div>
+                        </div>
+                        <div class="summary-card">
+                            <h3>✗ ตอบผิด</h3>
+                            <div class="value" id="incorrectCount">0</div>
+                        </div>
+                    </div>
+                    <div class="message" id="resultMessage"></div>
+                    <div class="btn-group">
+                        <button class="btn-secondary" onclick="window.labApp.goHome()">← กลับหน้าแรก</button>
+                        <button class="btn-primary" onclick="window.labApp.retakeLab()">📖 ทำแบบทดสอบใหม่</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // All Lab Questions Data
+        const questionsData = {
+            iam: [
+                { section: "Lab 1: IAM", question: "Task 1: ในหน้า IAM ให้เลือก ____ เพื่อดู Users ที่มีอยู่", options: ["Roles", "Policies", "Users", "Groups"], correct: "Users", explanation: "เลือก Users เพื่อดู user accounts ที่สร้างไว้" },
+                { section: "Lab 1: IAM", question: "User-1 ในตอนแรกมี permission อะไร?", options: ["Full Access", "No permissions", "Read-Only", "Admin Access"], correct: "No permissions", explanation: "user-1 เริ่มต้นไม่มี permission ต้องเพิ่มไปยัง Group" },
+                { section: "Lab 1: IAM", question: "มี ____ user groups ที่สร้างไว้ในลับนี้", options: ["2", "3", "4", "5"], correct: "3", explanation: "มี 3 groups: EC2-Admin, EC2-Support, S3-Support" },
+                { section: "Lab 1: IAM", question: "EC2-Support group มี policy อะไรแนบมากับ", options: ["AmazonEC2FullAccess", "AmazonEC2ReadOnlyAccess", "PowerUserAccess", "AdministratorAccess"], correct: "AmazonEC2ReadOnlyAccess", explanation: "EC2-Support มี AmazonEC2ReadOnlyAccess สำหรับ read-only access" },
+                { section: "Lab 1: IAM", question: "S3-Support group มี policy อะไร?", options: ["AmazonS3FullAccess", "AmazonS3ReadOnlyAccess", "S3AdminAccess", "S3ReadWrite"], correct: "AmazonS3ReadOnlyAccess", explanation: "S3-Support มี AmazonS3ReadOnlyAccess" },
+                { section: "Lab 1: IAM", question: "EC2-Admin group ใช้ ____ policy แบบไหน", options: ["Managed Policy", "Inline Policy", "Custom Policy", "AWS Policy"], correct: "Inline Policy", explanation: "EC2-Admin ใช้ Inline Policy เพื่อให้สามารถ Start/Stop EC2" },
+                { section: "Lab 1: IAM", question: "Task 2: user-1 ต้องเพิ่มไปยัง ____ group", options: ["EC2-Support", "S3-Support", "EC2-Admin", "All Groups"], correct: "S3-Support", explanation: "user-1 จ้างเป็น S3 support staff" },
+                { section: "Lab 1: IAM", question: "user-2 ต้องเพิ่มไปยัง ____ group", options: ["S3-Support", "EC2-Support", "EC2-Admin", "Developer"], correct: "EC2-Support", explanation: "user-2 เป็น EC2 support staff" },
+                { section: "Lab 1: IAM", question: "user-3 ต้องเพิ่มไปยัง ____ group", options: ["S3-Support", "EC2-Support", "EC2-Admin", "Operator"], correct: "EC2-Admin", explanation: "user-3 เป็น EC2 administrator" },
+                { section: "Lab 1: IAM", question: "Task 3: Sign-in URL มี format ____", options: ["aws.amazon.com/signin", "https://account-id.signin.aws.amazon.com/console", "https://console.aws.amazon.com", "aws.signin.com"], correct: "https://account-id.signin.aws.amazon.com/console", explanation: "Sign-in URL มี format นี้" },
+                { section: "Lab 1: IAM", question: "user-1 password คือ ____", options: ["Lab-Password2", "Lab-Password1", "Lab-Password3", "Admin123"], correct: "Lab-Password1", explanation: "user-1 password เป็น Lab-Password1" },
+                { section: "Lab 1: IAM", question: "ทำไม user-1 ไม่สามารถเข้าถึง EC2?", options: ["EC2 ไม่เปิด", "user-1 ไม่มี EC2 permission", "Security group block", "Instance stopped"], correct: "user-1 ไม่มี EC2 permission", explanation: "user-1 อยู่ใน S3-Support group เท่านั้น" },
+                { section: "Lab 1: IAM", question: "user-2 password คือ ____", options: ["Lab-Password1", "Lab-Password2", "Lab-Password3", "Support123"], correct: "Lab-Password2", explanation: "user-2 password เป็น Lab-Password2" },
+                { section: "Lab 1: IAM", question: "user-2 จะเห็นอะไรตอนไปที่ EC2 console?", options: ["Error message", "All instances", "Instances (read-only)", "No instances"], correct: "Instances (read-only)", explanation: "user-2 สามารถดู instances แต่ไม่สามารถแก้ไข" },
+                { section: "Lab 1: IAM", question: "ทำไม user-2 ไม่สามารถ Stop instance?", options: ["Instance protected", "No StopInstances permission", "Wrong region", "Instance already stopped"], correct: "No StopInstances permission", explanation: "user-2 มี read-only permission เท่านั้น" },
+                { section: "Lab 1: IAM", question: "user-3 password คือ ____", options: ["Lab-Password1", "Lab-Password2", "Lab-Password3", "Admin123"], correct: "Lab-Password3", explanation: "user-3 password เป็น Lab-Password3" },
+                { section: "Lab 1: IAM", question: "user-3 สามารถทำอะไรกับ EC2 instance?", options: ["Only view", "View, Start, Stop", "Full control", "Nothing"], correct: "View, Start, Stop", explanation: "user-3 เป็น EC2-Admin" },
+                { section: "Lab 1: IAM", question: "IAM policy มี 3 ส่วนหลักคืออะไร?", options: ["User, Role, Group", "Allow, Deny, Condition", "Effect, Action, Resource", "Principal, Action, Effect"], correct: "Effect, Action, Resource", explanation: "Effect (Allow/Deny), Action (API calls), Resource (target)" },
+                { section: "Lab 1: IAM", question: "Managed Policy คืออะไร?", options: ["Policy สำหรับ user เพียงคนเดียว", "Pre-built policy สามารถใช้ซ้ำได้", "Policy ที่อยู่ใน code", "Temporary policy"], correct: "Pre-built policy สามารถใช้ซ้ำได้", explanation: "Managed Policies เป็น pre-built policies" },
+                { section: "Lab 1: IAM", question: "Inline Policy คืออะไร?", options: ["Policy สำหรับหลาย users", "Policy เขียนแบบ inline", "Policy สำหรับ user หรือ group เดียว", "Temporary policy"], correct: "Policy สำหรับ user หรือ group เดียว", explanation: "Inline Policies ใช้สำหรับ one-off situations" }
+            ],
+            vpc: [
+                { section: "Lab 2: VPC", question: "Task 1: สร้าง VPC ต้องเลือก ____ option", options: ["VPC only", "VPC and more", "VPC wizard", "Quick create"], correct: "VPC and more", explanation: "เลือก 'VPC and more' สร้างทั้งหมด" },
+                { section: "Lab 2: VPC", question: "VPC name ต้องตั้งเป็น ____", options: ["my-vpc", "lab", "lab-vpc", "vpc-1"], correct: "lab", explanation: "ตั้ง name tag auto-generation เป็น 'lab'" },
+                { section: "Lab 2: VPC", question: "IPv4 CIDR block ของ VPC ต้องเป็น ____", options: ["10.0.1.0/16", "10.0.0.0/16", "192.168.0.0/16", "172.16.0.0/16"], correct: "10.0.0.0/16", explanation: "ตั้ง CIDR block เป็น 10.0.0.0/16" },
+                { section: "Lab 2: VPC", question: "Number of Availability Zones ต้องเป็น ____", options: ["1", "2", "3", "4"], correct: "1", explanation: "ในตอน Task 1 ตั้ง 1 AZ" },
+                { section: "Lab 2: VPC", question: "Public subnet CIDR block ต้องเป็น ____", options: ["10.0.0.0/24", "10.0.1.0/24", "10.0.2.0/24", "10.0.3.0/24"], correct: "10.0.0.0/24", explanation: "Public subnet 1 คือ 10.0.0.0/24" },
+                { section: "Lab 2: VPC", question: "Private subnet CIDR block ต้องเป็น ____", options: ["10.0.0.0/24", "10.0.1.0/24", "10.0.2.0/24", "10.0.3.0/24"], correct: "10.0.1.0/24", explanation: "Private subnet 1 คือ 10.0.1.0/24" },
+                { section: "Lab 2: VPC", question: "NAT gateways ต้องตั้งเป็น ____", options: ["In 2 AZs", "In 1 AZ", "None", "In all AZs"], correct: "In 1 AZ", explanation: "ตั้ง NAT gateways เป็น 'In 1 AZ'" },
+                { section: "Lab 2: VPC", question: "Internet Gateway (IGW) ของ VPC ชื่อ ____", options: ["lab-igw", "internet-gateway", "igw-1", "vpc-igw"], correct: "lab-igw", explanation: "IGW ชื่อ lab-igw" },
+                { section: "Lab 2: VPC", question: "Task 2: สร้าง subnet ที่ 2 (public) ในอะไร", options: ["AZ แรก", "AZ ที่ 2", "AZ ที่ 3", "Same AZ"], correct: "AZ ที่ 2", explanation: "สร้างใน AZ ที่สอง" },
+                { section: "Lab 2: VPC", question: "Public subnet 2 name คือ ____", options: ["lab-subnet-public-2", "lab-subnet-public2", "public2", "subnet-2"], correct: "lab-subnet-public2", explanation: "ตั้งชื่อ 'lab-subnet-public2'" },
+                { section: "Lab 2: VPC", question: "Public subnet 2 CIDR block ต้องเป็น ____", options: ["10.0.0.0/24", "10.0.1.0/24", "10.0.2.0/24", "10.0.3.0/24"], correct: "10.0.2.0/24", explanation: "Public subnet 2 ใช้ CIDR 10.0.2.0/24" },
+                { section: "Lab 2: VPC", question: "Private subnet 2 name คือ ____", options: ["lab-subnet-private2", "private-subnet-2", "private2", "subnet-3"], correct: "lab-subnet-private2", explanation: "ตั้งชื่อ 'lab-subnet-private2'" },
+                { section: "Lab 2: VPC", question: "Private subnet 2 CIDR block ต้องเป็น ____", options: ["10.0.2.0/24", "10.0.3.0/24", "10.0.1.0/24", "10.0.0.0/24"], correct: "10.0.3.0/24", explanation: "Private subnet 2 ใช้ CIDR 10.0.3.0/24" },
+                { section: "Lab 2: VPC", question: "Route table สำหรับ public subnets ชื่อ ____", options: ["rtb-private", "lab-rtb-public", "public-routes", "main-rtb"], correct: "lab-rtb-public", explanation: "Public route table ชื่อ lab-rtb-public" },
+                { section: "Lab 2: VPC", question: "Route table สำหรับ private subnets ชื่อ ____", options: ["lab-rtb-public", "lab-rtb-private1-us-east-1a", "private-routes", "main-rtb"], correct: "lab-rtb-private1-us-east-1a", explanation: "Private route table ชื่อ lab-rtb-private1-us-east-1a" },
+                { section: "Lab 2: VPC", question: "Public route table routing 0.0.0.0/0 ไปยัง ____", options: ["NAT Gateway", "Internet Gateway", "VPC Endpoint", "Local"], correct: "Internet Gateway", explanation: "Public route table route ไปที่ IGW" },
+                { section: "Lab 2: VPC", question: "Private route table routing 0.0.0.0/0 ไปยัง ____", options: ["Internet Gateway", "NAT Gateway", "VPC", "Local"], correct: "NAT Gateway", explanation: "Private route table route ไปที่ NAT Gateway" },
+                { section: "Lab 2: VPC", question: "Task 3: Security group name ต้องเป็น ____", options: ["Web SG", "Web Security Group", "Security-Group", "Web Server SG"], correct: "Web Security Group", explanation: "ตั้งชื่อ 'Web Security Group'" },
+                { section: "Lab 2: VPC", question: "Security group description ต้องเป็น ____", options: ["Web access", "Enable HTTP access", "Allow traffic", "Web server"], correct: "Enable HTTP access", explanation: "Description คือ 'Enable HTTP access'" },
+                { section: "Lab 2: VPC", question: "Inbound rule type ต้องเป็น ____", options: ["HTTPS", "SSH", "HTTP", "All traffic"], correct: "HTTP", explanation: "Inbound rule type คือ HTTP" },
+                { section: "Lab 2: VPC", question: "Task 4: EC2 instance name ต้องเป็น ____", options: ["Server", "Web Server", "Web Server 1", "Server-1"], correct: "Web Server 1", explanation: "ตั้งชื่อ 'Web Server 1'" },
+                { section: "Lab 2: VPC", question: "EC2 instance ต้องวาง subnet ____", options: ["lab-subnet-public1", "lab-subnet-public2", "lab-subnet-private1", "lab-subnet-private2"], correct: "lab-subnet-public2", explanation: "วาง instance ใน lab-subnet-public2" }
+            ],
+            ec2: [
+                { section: "Lab 3: EC2", question: "Task 1: Instance name ต้องเป็น ____", options: ["Server", "Web Server", "Instance-1", "EC2-1"], correct: "Web Server", explanation: "ตั้งชื่อ instance เป็น 'Web Server'" },
+                { section: "Lab 3: EC2", question: "AMI ต้องเลือก ____", options: ["Ubuntu", "Amazon Linux 2023", "Windows Server", "CentOS"], correct: "Amazon Linux 2023", explanation: "เลือก Amazon Linux 2023 AMI" },
+                { section: "Lab 3: EC2", question: "Instance type ต้องเป็น ____", options: ["t2.small", "t2.micro", "t2.medium", "m5.large"], correct: "t2.micro", explanation: "เลือก t2.micro instance type" },
+                { section: "Lab 3: EC2", question: "Key pair ต้องเลือก ____", options: ["mykey", "vockey", "default", "aws-key"], correct: "vockey", explanation: "เลือก vockey key pair" },
+                { section: "Lab 3: EC2", question: "VPC ต้องเลือก ____", options: ["default VPC", "Lab VPC", "vpc-1", "None"], correct: "Lab VPC", explanation: "เลือก Lab VPC" },
+                { section: "Lab 3: EC2", question: "Subnet ต้องเลือก ____", options: ["PublicSubnet1", "PublicSubnet2", "PrivateSubnet", "Default"], correct: "PublicSubnet1", explanation: "เลือก PublicSubnet1" },
+                { section: "Lab 3: EC2", question: "Auto-assign public IP ต้องเป็น ____", options: ["Disable", "Enable", "Optional", "Auto"], correct: "Enable", explanation: "ตั้งเป็น Enable" },
+                { section: "Lab 3: EC2", question: "Security group ต้องสร้าง ____ ชื่อ ____", options: ["new, Web Server security group", "existing, default", "new, Lab-SG", "existing, Web-SG"], correct: "new, Web Server security group", explanation: "สร้าง new security group" },
+                { section: "Lab 3: EC2", question: "Security group description ต้องเป็น ____", options: ["Web traffic", "Security group for my web server", "Allow HTTP", "Web server access"], correct: "Security group for my web server", explanation: "Description ตามข้อกำหนด" },
+                { section: "Lab 3: EC2", question: "ในตอนแรก security group มี inbound rule กี่ตัว?", options: ["0", "1", "2", "3"], correct: "0", explanation: "เริ่มต้นไม่มี inbound rules" },
+                { section: "Lab 3: EC2", question: "User data script ติดตั้ง ____ web server", options: ["nginx", "Apache (httpd)", "IIS", "Tomcat"], correct: "Apache (httpd)", explanation: "Script ติดตั้ง Apache httpd" },
+                { section: "Lab 3: EC2", question: "Web page message ต้องเป็น ____", options: ["Welcome", "Hello From Your Web Server!", "AWS Lab", "Server Running"], correct: "Hello From Your Web Server!", explanation: "Web page แสดง message นี้" },
+                { section: "Lab 3: EC2", question: "Task 2: ไปดู status checks ผ่านไป ____ checks", options: ["1/2", "2/2", "0/2", "Pending"], correct: "2/2", explanation: "รอจนกว่า 2/2 checks ผ่าน" },
+                { section: "Lab 3: EC2", question: "Task 2: ระบบ monitoring ใช้ ____ เก็บ metrics", options: ["CloudTrail", "CloudWatch", "EventBridge", "SNS"], correct: "CloudWatch", explanation: "EC2 ส่ง metrics ไปยัง CloudWatch" },
+                { section: "Lab 3: EC2", question: "Get system log ประโยชน์สำหรับ ____", options: ["Performance tuning", "Problem diagnosis", "Security audit", "Cost analysis"], correct: "Problem diagnosis", explanation: "ใช้สำหรับ troubleshooting" },
+                { section: "Lab 3: EC2", question: "Task 3: เพื่อให้เข้าถึง web server ต้อง add inbound rule type ____", options: ["HTTPS", "SSH", "HTTP", "All traffic"], correct: "HTTP", explanation: "เพิ่ม HTTP inbound rule" },
+                { section: "Lab 3: EC2", question: "Inbound rule source ต้องเป็น ____", options: ["My IP", "10.0.0.0/16", "Anywhere-IPv4", "Security group"], correct: "Anywhere-IPv4", explanation: "Source คือ Anywhere-IPv4" },
+                { section: "Lab 3: EC2", question: "Task 4: ก่อน resize instance ต้อง ____ มันก่อน", options: ["Reboot", "Stop", "Terminate", "Snapshot"], correct: "Stop", explanation: "ต้อง stop instance ก่อน" },
+                { section: "Lab 3: EC2", question: "Instance type ต้อง resize จาก t2.micro เป็น ____", options: ["t2.small", "t2.medium", "t2.large", "m5.large"], correct: "t2.small", explanation: "Resize เป็น t2.small" },
+                { section: "Lab 3: EC2", question: "EBS volume ต้อง resize จาก 8 GB เป็น ____ GB", options: ["10", "16", "20", "32"], correct: "10", explanation: "Resize volume เป็น 10 GB" },
+                { section: "Lab 3: EC2", question: "Task 4: enable ____ เพื่อป้องกัน accidental stop", options: ["Termination protection", "Stop protection", "Delete protection", "Shutdown protection"], correct: "Stop protection", explanation: "Enable Stop protection" },
+                { section: "Lab 3: EC2", question: "Task 5: Service quotas ใช้ดู ____ สำหรับ resources", options: ["Usage", "Cost", "Limits", "Performance"], correct: "Limits", explanation: "แสดง limits และ quotas" },
+                { section: "Lab 3: EC2", question: "Task 5: ค้นหา ____ เพื่อดู instance limits", options: ["instances", "running on-demand", "ec2 quota", "compute limits"], correct: "running on-demand", explanation: "ค้นหา running on-demand" },
+                { section: "Lab 3: EC2", question: "Task 6: message เมื่อพยายาม stop instance ที่มี stop protection", options: ["Instance stopped", "Permission denied", "Failed to stop the instance", "Resource locked"], correct: "Failed to stop the instance", explanation: "Error message นี้" },
+                { section: "Lab 3: EC2", question: "Termination protection คืออะไร?", options: ["ป้องกัน restart", "ป้องกัน delete", "ป้องกัน reboot", "ป้องกัน modify"], correct: "ป้องกัน delete", explanation: "ป้องกัน accidental termination" }
+            ],
+            ebs: [
+                { section: "Lab 4: EBS", question: "Task 1: ก่อนสร้าง EBS Volume ต้องสังเกต ____", options: ["Public IP Address", "Instance Type", "Availability Zone", "Security Group"], correct: "Availability Zone", explanation: "Volume ต้องอยู่ใน AZ เดียวกับ Instance" },
+                { section: "Lab 4: EBS", question: "Volume Type ต้องเลือก ____", options: ["Provisioned IOPS SSD (io1)", "General Purpose SSD (gp2)", "Throughput Optimized HDD (st1)", "Cold HDD (sc1)"], correct: "General Purpose SSD (gp2)", explanation: "ใช้ General Purpose SSD (gp2)" },
+                { section: "Lab 4: EBS", question: "Volume size ต้องเป็น ____ GiB", options: ["8", "10", "1", "20"], correct: "1", explanation: "สร้าง 1 GiB เพื่อแตกต่างจาก root volume" },
+                { section: "Lab 4: EBS", question: "Tag Name ต้องเป็น ____", options: ["Volume-1", "My Volume", "EBS-Volume", "Lab-Volume"], correct: "My Volume", explanation: "ตั้งชื่อ 'My Volume'" },
+                { section: "Lab 4: EBS", question: "Task 2: เลือก Instance ชื่อ ____", options: ["My Instance", "EC2-Server", "Lab", "Web-Server"], correct: "Lab", explanation: "เลือก Instance ชื่อ 'Lab'" },
+                { section: "Lab 4: EBS", question: "Device name จะเป็น ____", options: ["/dev/sda1", "/dev/sdb", "/dev/sdf", "/dev/xvda1"], correct: "/dev/sdf", explanation: "Device name คือ /dev/sdf" },
+                { section: "Lab 4: EBS", question: "Task 3: เชื่อมต่อ instance ใช้วิธี ____", options: ["SSH from terminal", "RDP from Windows", "EC2 Instance Connect", "Systems Manager Session Manager"], correct: "EC2 Instance Connect", explanation: "ใช้ EC2 Instance Connect" },
+                { section: "Lab 4: EBS", question: "คำสั่ง df -h ใช้เพื่อ ____", options: ["Delete file", "Disk format", "Display file system", "Download file"], correct: "Display file system", explanation: "แสดง file system ทั้งหมด" },
+                { section: "Lab 4: EBS", question: "Root volume จะแสดง ____", options: ["/dev/sdf", "/dev/xvda1", "/dev/sdb1", "/dev/nvme0n1"], correct: "/dev/xvda1", explanation: "Root volume เป็น /dev/xvda1 ขนาด 8GB" },
+                { section: "Lab 4: EBS", question: "คำสั่งสร้าง file system ext3 บน Volume ____", options: ["mkfs -t ext3 /dev/sdf", "format /dev/sdf", "fsck /dev/sdf", "fdisk /dev/sdf"], correct: "mkfs -t ext3 /dev/sdf", explanation: "ใช้ sudo mkfs -t ext3 /dev/sdf" },
+                { section: "Lab 4: EBS", question: "Mount point ต้องเป็น ____", options: ["/mnt/backup", "/mnt/data-store", "/storage/data", "/data"], correct: "/mnt/data-store", explanation: "สร้าง /mnt/data-store" },
+                { section: "Lab 4: EBS", question: "คำสั่ง Mount Volume ____", options: ["mount /mnt/data-store /dev/sdf", "mount /dev/sdf /mnt/data-store", "attach /dev/sdf /mnt/data-store", "link /dev/sdf /mnt/data-store"], correct: "mount /dev/sdf /mnt/data-store", explanation: "sudo mount /dev/sdf /mnt/data-store" },
+                { section: "Lab 4: EBS", question: "ไฟล์ที่ต้องแก้ไข auto mount ____", options: ["/etc/mount.conf", "/etc/fstab", "/etc/storage.config", "/etc/devices"], correct: "/etc/fstab", explanation: "แก้ไข /etc/fstab" },
+                { section: "Lab 4: EBS", question: "ไฟล์ที่เขียนลง Volume ____", options: ["data.txt", "file.txt", "info.txt", "volume.txt"], correct: "file.txt", explanation: "สร้าง file.txt" },
+                { section: "Lab 4: EBS", question: "Task 5: สร้าง Snapshot เลือก ____ จาก Actions", options: ["Backup volume", "Create snapshot", "Copy snapshot", "Create image"], correct: "Create snapshot", explanation: "เลือก 'Create snapshot'" },
+                { section: "Lab 4: EBS", question: "Snapshot name ____", options: ["Snapshot-1", "My Snapshot", "EBS-Backup", "Volume-Snapshot"], correct: "My Snapshot", explanation: "ตั้งชื่อ 'My Snapshot'" },
+                { section: "Lab 4: EBS", question: "Snapshot status ขั้นแรก ____", options: ["Creating", "Pending", "Preparing", "Initializing"], correct: "Pending", explanation: "Status เป็น Pending ระหว่างสร้าง" },
+                { section: "Lab 4: EBS", question: "Snapshot จัดเก็บเฉพาะ ____ เท่านั้น", options: ["All data", "Used storage blocks", "Empty spaces", "System files"], correct: "Used storage blocks", explanation: "จัดเก็บเฉพาะ block ที่ใช้งาน" },
+                { section: "Lab 4: EBS", question: "Task 6: Restore snapshot เลือก ____", options: ["Attach snapshot", "Create volume from snapshot", "Download snapshot", "Restore data"], correct: "Create volume from snapshot", explanation: "เลือก 'Create volume from snapshot'" },
+                { section: "Lab 4: EBS", question: "Restored Volume name ____", options: ["Volume-Copy", "Restored Volume", "Backup-Volume", "Recovery-Volume"], correct: "Restored Volume", explanation: "ตั้งชื่อ 'Restored Volume'" },
+                { section: "Lab 4: EBS", question: "Restored Volume device name ____", options: ["/dev/sdf", "/dev/sdg", "/dev/xvdf", "/dev/xvde"], correct: "/dev/sdg", explanation: "Device จะเป็น /dev/sdg" },
+                { section: "Lab 4: EBS", question: "Mount point ของ Restored Volume ____", options: ["/mnt/data-store", "/mnt/data-store2", "/mnt/recovery", "/mnt/backup"], correct: "/mnt/data-store2", explanation: "สร้าง /mnt/data-store2" },
+                { section: "Lab 4: EBS", question: "ไฟล์ใน Restored Volume ____", options: ["new file", "file.txt", "restored.txt", "backup.txt"], correct: "file.txt", explanation: "file.txt จากต้นฉบับ" },
+                { section: "Lab 4: EBS", question: "ประโยชน์ Multi-Volume ____", options: ["Faster speed", "Separate storage management", "Cheaper cost", "Better security"], correct: "Separate storage management", explanation: "จัดการ OS และ data volume แยก" },
+                { section: "Lab 4: EBS", question: "EBS ความหมายคือ ____", options: ["Elastic Block Service", "Elastic Block Storage", "Elastic Backend Storage", "Elastic Boot Service"], correct: "Elastic Block Storage", explanation: "Amazon Elastic Block Storage" }
+            ],
+            rds: [
+                { section: "Lab 5: RDS", question: "Task 1: ไปที่ VPC เลือก ____ เพื่อสร้าง DB Security Group", options: ["Instances", "Databases", "Security groups", "Network ACLs"], correct: "Security groups", explanation: "ไปที่ Security groups" },
+                { section: "Lab 5: RDS", question: "DB Security Group name ____", options: ["Database SG", "DB Security Group", "RDS-SG", "Database Access"], correct: "DB Security Group", explanation: "ตั้งชื่อ 'DB Security Group'" },
+                { section: "Lab 5: RDS", question: "Security group description ____", options: ["Database access", "Permit access from Web Security Group", "RDS access", "Allow connections"], correct: "Permit access from Web Security Group", explanation: "Description ตามข้อกำหนด" },
+                { section: "Lab 5: RDS", question: "Inbound rule type ____", options: ["HTTP", "HTTPS", "MySQL/Aurora (3306)", "PostgreSQL (5432)"], correct: "MySQL/Aurora (3306)", explanation: "ใช้ MySQL/Aurora port 3306" },
+                { section: "Lab 5: RDS", question: "Source ของ inbound rule ____", options: ["0.0.0.0/0", "10.0.0.0/16", "Web Security Group", "My IP"], correct: "Web Security Group", explanation: "อนุญาตเฉพาะ Web Security Group" },
+                { section: "Lab 5: RDS", question: "Task 2: ไปที่ RDS เลือก ____ สร้าง Subnet Group", options: ["Databases", "Subnet groups", "Snapshots", "Parameter groups"], correct: "Subnet groups", explanation: "ไปที่ Subnet groups" },
+                { section: "Lab 5: RDS", question: "DB Subnet Group name ____", options: ["Subnet-Group", "DB-Subnet-Group", "Database Subnets", "RDS-Subnets"], correct: "DB-Subnet-Group", explanation: "ตั้งชื่อ 'DB-Subnet-Group'" },
+                { section: "Lab 5: RDS", question: "DB Subnet Group ต้องใช้ Subnets จาก ____ AZ ขึ้นไป", options: ["1", "2", "3", "4"], correct: "2", explanation: "ต้องมี 2 AZ ขึ้นไป" },
+                { section: "Lab 5: RDS", question: "CIDR ranges ของ private subnets ____", options: ["10.0.0.0/24 และ 10.0.2.0/24", "10.0.1.0/24 และ 10.0.3.0/24", "10.0.0.0/24 และ 10.0.1.0/24", "10.0.2.0/24 และ 10.0.3.0/24"], correct: "10.0.1.0/24 และ 10.0.3.0/24", explanation: "Private subnets CIDR ตามนี้" },
+                { section: "Lab 5: RDS", question: "Task 3: Database engine ____", options: ["PostgreSQL", "MySQL", "Oracle", "MariaDB"], correct: "MySQL", explanation: "เลือก MySQL" },
+                { section: "Lab 5: RDS", question: "Template ____", options: ["Production", "Dev/Test", "Enterprise", "Microservices"], correct: "Dev/Test", explanation: "เลือก Dev/Test" },
+                { section: "Lab 5: RDS", question: "ต้องเลือก ____ เพื่อ High Availability", options: ["Single-AZ deployment", "Multi-AZ DB instance", "Read Replica", "Aurora DB"], correct: "Multi-AZ DB instance", explanation: "Multi-AZ สร้าง Primary + Standby" },
+                { section: "Lab 5: RDS", question: "DB instance identifier ____", options: ["database", "my-db", "lab-db", "rds-instance"], correct: "lab-db", explanation: "ตั้งชื่อ 'lab-db'" },
+                { section: "Lab 5: RDS", question: "Master username ____", options: ["admin", "root", "main", "dbadmin"], correct: "main", explanation: "ตั้ง username เป็น 'main'" },
+                { section: "Lab 5: RDS", question: "Master password ____", options: ["password123", "lab-password", "admin123", "secure-pass"], correct: "lab-password", explanation: "ตั้ง password เป็น 'lab-password'" },
+                { section: "Lab 5: RDS", question: "Instance class ____", options: ["db.t2.small", "db.t3.micro", "db.m5.large", "db.r5.xlarge"], correct: "db.t3.micro", explanation: "เลือก db.t3.micro" },
+                { section: "Lab 5: RDS", question: "Storage type ____", options: ["Magnetic", "Provisioned IOPS (SSD)", "General Purpose (SSD)", "Throughput Optimized"], correct: "General Purpose (SSD)", explanation: "ใช้ General Purpose SSD" },
+                { section: "Lab 5: RDS", question: "Allocated storage ____", options: ["10", "20", "50", "100"], correct: "20", explanation: "ตั้ง 20 GB" },
+                { section: "Lab 5: RDS", question: "Public access ____", options: ["Yes", "No", "Maybe", "Optional"], correct: "No", explanation: "ตั้งเป็น No (Private)" },
+                { section: "Lab 5: RDS", question: "Initial database name ____", options: ["mysql", "database", "lab", "test"], correct: "lab", explanation: "ตั้ง database name เป็น 'lab'" }
+            ]
+        };
+
+        // Application Object
+        window.labApp = {
+            currentLab: null,
+            questions: [],
+            currentQuestion: 0,
+            answered: new Set(),
+            answers: new Map(),
+
+            startLab: function(lab) {
+                this.currentLab = lab;
+                this.questions = questionsData[lab] || [];
+                this.currentQuestion = 0;
+                this.answered = new Set();
+                this.answers = new Map();
+                this.showPage('quizPage');
+                this.showQuestion();
+            },
+
+            showQuestion: function() {
+                if (this.questions.length === 0) return;
+                const q = this.questions[this.currentQuestion];
+                const progress = ((this.currentQuestion + 1) / this.questions.length) * 100;
+                
+                document.getElementById('progressFill').style.width = progress + '%';
+                document.getElementById('currentQ').textContent = this.currentQuestion + 1;
+                document.getElementById('totalQ').textContent = this.questions.length;
+                document.getElementById('sectionLabel').textContent = q.section;
+                document.getElementById('questionText').textContent = q.question;
+                
+                const optionsHTML = q.options.map((opt) => {
+                    const isAnswered = this.answers.has(this.currentQuestion);
+                    const isSelected = this.answers.get(this.currentQuestion) === opt;
+                    const isCorrect = opt === q.correct;
+                    
+                    let classes = 'option-btn';
+                    if (isAnswered) {
+                        if (isSelected && isCorrect) classes += ' correct';
+                        else if (isSelected && !isCorrect) classes += ' incorrect';
+                    }
+                    
+                    return `<button class="${classes}" onclick="window.labApp.selectOption('${opt}')" ${isAnswered ? 'disabled' : ''}>${opt}</button>`;
+                }).join('');
+                
+                document.getElementById('optionsContainer').innerHTML = optionsHTML;
+                
+                const feedback = document.getElementById('feedback');
+                if (this.answered.has(this.currentQuestion)) {
+                    const selected = this.answers.get(this.currentQuestion);
+                    const isCorrect = selected === q.correct;
+                    feedback.textContent = isCorrect ? '✓ ถูกต้อง! ' + q.explanation : '✗ ผิด\nคำตอบคือ: ' + q.correct + '\n' + q.explanation;
+                    feedback.className = isCorrect ? 'feedback show correct-fb' : 'feedback show incorrect-fb';
+                } else {
+                    feedback.className = 'feedback';
+                }
+                
+                document.getElementById('nextBtn').disabled = !this.answered.has(this.currentQuestion);
+                document.getElementById('prevBtn').disabled = this.currentQuestion === 0;
+            },
+
+            selectOption: function(option) {
+                this.answers.set(this.currentQuestion, option);
+                this.answered.add(this.currentQuestion);
+                this.showQuestion();
+            },
+
+            nextQuestion: function() {
+                if (this.currentQuestion < this.questions.length - 1) {
+                    this.currentQuestion++;
+                    this.showQuestion();
+                } else {
+                    this.showSummary();
+                }
+            },
+
+            prevQuestion: function() {
+                if (this.currentQuestion > 0) {
+                    this.currentQuestion--;
+                    this.showQuestion();
+                }
+            },
+
+            showSummary: function() {
+                const correct = Array.from(this.answered).filter(idx => this.answers.get(idx) === this.questions[idx].correct).length;
+                const incorrect = this.answered.size - correct;
+                const percent = Math.round((correct / this.questions.length) * 100);
+                
+                const labNames = { iam: 'Lab 1: IAM', vpc: 'Lab 2: VPC', ec2: 'Lab 3: EC2', ebs: 'Lab 4: EBS', rds: 'Lab 5: RDS' };
+                
+                document.getElementById('labTitle').textContent = labNames[this.currentLab];
+                document.getElementById('scoreValue').textContent = `${correct}/${this.questions.length}`;
+                document.getElementById('scorePercent').textContent = `${percent}%`;
+                document.getElementById('correctCount').textContent = correct;
+                document.getElementById('incorrectCount').textContent = incorrect;
+                
+                let message = '';
+                if (percent >= 80) message = '🎉 ยอดเยี่ยม! คุณเข้าใจเนื้อหาได้ดีมากแล้ว';
+                else if (percent >= 60) message = '👍 ดีมาก! ยังมีส่วนที่ต้องทบทวน';
+                else if (percent >= 40) message = '📚 ต้องทบทวนเพิ่มเติม';
+                else message = '🎓 ทำแบบทดสอบใหม่เพื่อเข้าใจเพิ่มเติม';
+                
+                document.getElementById('resultMessage').textContent = message;
+                this.showPage('summaryPage');
+            },
+
+            showPage: function(pageId) {
+                document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+                document.getElementById(pageId).classList.add('active');
+            },
+
+            goHome: function() {
+                this.showPage('homePage');
+            },
+
+            retakeLab: function() {
+                this.startLab(this.currentLab);
+            }
+        };
+    </script>
+</body>
+</html>
